@@ -10,7 +10,7 @@
         config.allowUnfreePredicate = pkg:
           builtins.elem (nixpkgs.lib.getName pkg) [
             "astah-professional"
-            # weitere unfree-Pakete hier ergänzen:
+            "sqldeveloper"
           ];
       };
     in
@@ -21,7 +21,8 @@
           greenfoot     = pkgs.callPackage ./packages/greenfoot.nix { };
           jedit         = pkgs.callPackage ./packages/jedit.nix { };
           netbeans      = pkgs.callPackage ./packages/netbeans.nix { };
-          astah         = pkgs.callPackage ./packages/astah.nix { };
+          astah         = pkgs.callPackage ./packages/astah/astah.nix { };
+          sqldeveloper  = pkgs.callPackage ./packages/sqldeveloper.nix { };
           intellij-idea = pkgs.jetbrains.idea-oss;
         });
       apps = forAllSystems (system: {
