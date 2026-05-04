@@ -21,7 +21,7 @@
           greenfoot     = pkgs.callPackage ./packages/greenfoot.nix { };
           jedit         = pkgs.callPackage ./packages/jedit.nix { };
           netbeans      = pkgs.callPackage ./packages/netbeans.nix { };
-          astah         = pkgs.callPackage ./packages/astah/astah.nix { };
+          astah         = pkgs.callPackage ./packages/astah.nix { };
           intellij-idea = pkgs.jetbrains.idea-oss;
         });
       apps = forAllSystems (system: {
