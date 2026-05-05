@@ -20,15 +20,15 @@
         in {
           greenfoot     = pkgs.callPackage ./packages/greenfoot.nix { };
           jedit         = pkgs.callPackage ./packages/jedit.nix { };
-          netbeans      = pkgs.callPackage ./packages/netbeans.nix { };
+          netbeans      = pkgs.callPackage ./packages/netbeans23.nix{ };
           astah         = pkgs.callPackage ./packages/astah/astah.nix { };
-          sqldeveloper  = pkgs.callPackage ./packages/sqldeveloper.nix { };
+          sqldeveloper  = pkgs.callPackage ./packages/sqldeveloper23.nix { };
           intellij-idea = pkgs.jetbrains.idea-oss;
         });
       apps = forAllSystems (system: {
         intellij-idea = {
           type = "app";
-          program = "${pkgsFor system}.jetbrains.idea-oss}/bin/idea-oss";
+          program = "${(pkgsFor system).jetbrains.idea-oss}/bin/idea-oss";
         };
         astah = {
           type = "app";

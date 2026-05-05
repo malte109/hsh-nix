@@ -1,72 +1,68 @@
-{
-  lib,
-  stdenv,
-  fetchurl,
-  openjdk21,
-  openjfx21,
-  glib,
-  dpkg,
-  wrapGAppsHook3,
-}:
-let
-  openjdk = openjdk21.override {
-    enableJavaFX = true;
-    openjfx_jdk = openjfx21.override { withWebKit = true; };
-  };
-in
-stdenv.mkDerivation rec {
+{ pkgs ? import <nixpkgs> {} }:
+
+pkgs.stdenv.mkDerivation rec {
   pname = "greenfoot";
   version = "3.9.0";
 
-  src = fetchurl {
-    # We use the deb here. First instinct might be to go for the "generic" JAR
-    # download, but that is actually a graphical installer that is much harder
-    # to unpack than the deb.
-    url = "https://www.greenfoot.org/download/files/Greenfoot-linux-arm64-${
-      builtins.replaceStrings [ "." ] [ "" ] version
-    }.deb";
-    hash = "sha256-d5bkK+teTA4fxFb46ovbZE28l8WILGStv3Vg3nJZfv0=";
+  src = pkgs.fetchurl {
+    url = "https://www.greenfoot.org/download/files/Greenfoot-linux-x64-390.deb";
+    sha256 = "406f0241b1fc013aaed44d2e92d8c80780c9fa2787a1f130c17fbc84849d5f49";
   };
 
-  nativeBuildInputs = [
-    dpkg
-    wrapGAppsHook3
-  ];
-  buildInputs = [ glib ];
+  nativeBuildInputs = [ pkgs.dpkg pkgs.makeWrapper ];
 
-  dontWrapGApps = true;
-
-  installPhase = ''
-    runHook preInstall
-
-    mkdir -p $out
-    cp -r usr/* $out
-
-    rm -r $out/share/greenfoot/jdk
-    rm -r $out/share/greenfoot/javafx-*.jar
-
-    makeWrapper ${openjdk}/bin/java $out/bin/greenfoot \
-      "''${gappsWrapperArgs[@]}" \
-      --add-flags "-Dawt.useSystemAAFontSettings=gasp -Xmx512M \
-                   --add-opens javafx.graphics/com.sun.glass.ui=ALL-UNNAMED \
-                   -cp $out/share/greenfoot/boot.jar bluej.Boot \
-                   -greenfoot=true -bluej.compiler.showunchecked=false \
-                   -greenfoot.scenarios=$out/share/doc/Greenfoot/scenarios \
-                   -greenfoot.url.javadoc=file://$out/share/doc/Greenfoot/API"
-
-    runHook postInstall
+  # Greenfoot ships its own bundled JDK inside the deb – we use that,
+  # exactly as the Flatpak manifest does (JAVA_HOME=/app/share/greenfoot/jdk).
+  unpackPhase = ''
+    dpkg-deb -x $src deb-contents
   '';
 
-  meta = {
-    description = "Simple integrated development environment for Java";
+  installPhase = ''
+    mkdir -p $out/share
+    mkdir -p $out/bin
+
+    cp -r deb-contents/usr/share/greenfoot $out/share/greenfoot
+
+    # Build the JavaFX jar list the same way the Flatpak wrapper does.
+    cat > $out/bin/greenfoot << 'WRAPPER'
+    #!/bin/sh
+    INSTALLDIR="@out@/share/greenfoot"
+    JAVAPATH="$INSTALLDIR/jdk"
+    CP="$INSTALLDIR/boot.jar"
+    for jar in "$INSTALLDIR"/javafx*.jar; do
+      CP="$CP:$jar"
+    done
+    exec "$JAVAPATH/bin/java" \
+      -Dhttps.protocols=TLSv1,TLSv1.1,TLSv1.2 \
+      -Djdk.gtk.version=2 \
+      -Dawt.useSystemAAFontSettings=on \
+      -Xmx512M \
+      -cp "$CP" bluej.Boot \
+      -greenfoot=true \
+      -bluej.libdir="$INSTALLDIR" \
+      -bluej.compiler.showunchecked=false \
+      -greenfoot.scenarios="$INSTALLDIR/../doc/Greenfoot/scenarios" \
+      -greenfoot.url.javadoc="file://$INSTALLDIR/../doc/Greenfoot/API/" \
+      "$@"
+    WRAPPER
+
+    substituteInPlace $out/bin/greenfoot \
+      --replace '@out@' "$out"
+
+    chmod +x $out/bin/greenfoot
+
+    # Copy scenarios/API docs if present in the deb
+    if [ -d deb-contents/usr/share/doc/Greenfoot ]; then
+      mkdir -p $out/share/doc
+      cp -r deb-contents/usr/share/doc/Greenfoot $out/share/doc/Greenfoot
+    fi
+  '';
+
+  meta = with pkgs.lib; {
+    description = "Greenfoot – interactive Java development environment";
     homepage = "https://www.greenfoot.org/";
-    sourceProvenance = with lib.sourceTypes; [ binaryBytecode ];
-    license = with lib.licenses; [
-      gpl2Plus
-      classpathException20
-    ];
+    license = licenses.gpl2Plus;
+    platforms = [ "x86_64-linux" ];
     mainProgram = "greenfoot";
-    maintainers = [ lib.maintainers.chvp ];
-    platforms = lib.platforms.linux;
   };
 }
