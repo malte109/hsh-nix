@@ -9,21 +9,38 @@ pkgs.stdenv.mkDerivation rec {
     sha256 = "406f0241b1fc013aaed44d2e92d8c80780c9fa2787a1f130c17fbc84849d5f49";
   };
 
-  nativeBuildInputs = [ pkgs.dpkg pkgs.makeWrapper ];
+  nativeBuildInputs = [ pkgs.dpkg pkgs.makeWrapper pkgs.copyDesktopItems ];
 
-  # Greenfoot ships its own bundled JDK inside the deb – we use that,
-  # exactly as the Flatpak manifest does (JAVA_HOME=/app/share/greenfoot/jdk).
+  desktopItems = [
+    (pkgs.makeDesktopItem {
+      name = "greenfoot";
+      exec = "greenfoot";
+      icon = "greenfoot";
+      desktopName = "Greenfoot";
+      comment = "Interactive Java development environment";
+      categories = [ "Development" "Education" ];
+    })
+  ];
+
   unpackPhase = ''
     dpkg-deb -x $src deb-contents
   '';
 
   installPhase = ''
+    runHook preInstall
+
     mkdir -p $out/share
     mkdir -p $out/bin
+    mkdir -p $out/share/icons/hicolor/48x48/apps
 
     cp -r deb-contents/usr/share/greenfoot $out/share/greenfoot
 
-    # Build the JavaFX jar list the same way the Flatpak wrapper does.
+    # Icon aus dem deb übernehmen
+    if [ -f deb-contents/usr/share/pixmaps/greenfoot.png ]; then
+      install -Dm644 deb-contents/usr/share/pixmaps/greenfoot.png \
+        $out/share/icons/hicolor/48x48/apps/greenfoot.png
+    fi
+
     cat > $out/bin/greenfoot << 'WRAPPER'
     #!/bin/sh
     INSTALLDIR="@out@/share/greenfoot"
@@ -51,11 +68,12 @@ pkgs.stdenv.mkDerivation rec {
 
     chmod +x $out/bin/greenfoot
 
-    # Copy scenarios/API docs if present in the deb
     if [ -d deb-contents/usr/share/doc/Greenfoot ]; then
       mkdir -p $out/share/doc
       cp -r deb-contents/usr/share/doc/Greenfoot $out/share/doc/Greenfoot
     fi
+
+    runHook postInstall
   '';
 
   meta = with pkgs.lib; {
