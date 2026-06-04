@@ -14,6 +14,18 @@ pkgs.stdenv.mkDerivation rec {
     pkgs.copyDesktopItems
   ];
 
+  desktopItems = [
+    (pkgs.makeDesktopItem {
+      name = "intellij-idea-community";
+      exec = "idea";
+      icon = "intellij-idea-community";
+      desktopName = "IntelliJ IDEA Community";
+      comment = "Capable and Ergonomic IDE for JVM";
+      categories = [ "Development" "IDE" "Java" ];
+      startupWMClass = "jetbrains-idea";
+    })
+  ];
+
   buildInputs = [
     pkgs.jetbrains.jdk
     pkgs.fontconfig
@@ -41,7 +53,6 @@ pkgs.stdenv.mkDerivation rec {
 
     mkdir -p $out/share/intellij
     mkdir -p $out/bin
-    mkdir -p $out/share/applications
     mkdir -p $out/share/icons/hicolor/128x128/apps
     mkdir -p $out/share/icons/hicolor/scalable/apps
 
@@ -58,18 +69,6 @@ pkgs.stdenv.mkDerivation rec {
     install -Dm644 \
       $out/share/intellij/bin/idea.svg \
       $out/share/icons/hicolor/scalable/apps/intellij-idea-community.svg
-
-    cat > $out/share/applications/intellij-idea-community.desktop <<EOF
-    [Desktop Entry]
-    Name=IntelliJ IDEA Community
-    Comment=Capable and Ergonomic IDE for JVM
-    Exec=idea
-    Icon=intellij-idea-community
-    Terminal=false
-    Type=Application
-    Categories=Development;IDE;Java;
-    StartupWMClass=jetbrains-idea
-    EOF
 
     runHook postInstall
   '';

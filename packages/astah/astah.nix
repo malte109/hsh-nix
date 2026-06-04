@@ -50,14 +50,13 @@ stdenv.mkDerivation rec {
     # Verzeichnisse anlegen
     mkdir -p $out/bin
     mkdir -p $out/share/astah_professional
-    mkdir -p $out/share/icons/hicolor/64x64/apps
-
+    
     # Programmdateien kopieren
     cp -r deb-contents/usr/lib/astah_professional/. $out/share/astah_professional/
 
-    # Icon kopieren (ggf. konvertieren falls nötig)
+    # Icon kopieren
     if [ -f deb-contents/usr/share/pixmaps/astah_professional.png ]; then
-      cp deb-contents/usr/share/pixmaps/astah_professional.png \
+      install -Dm644 deb-contents/usr/share/pixmaps/astah_professional.png \
         $out/share/icons/hicolor/64x64/apps/astah-professional.png
     fi
 

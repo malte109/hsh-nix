@@ -36,13 +36,12 @@ pkgs.stdenv.mkDerivation rec {
 
     mkdir -p $out/share/jEdit
     mkdir -p $out/bin
-    mkdir -p $out/share/icons/hicolor/48x48/apps
 
     cp -r deb-contents/usr/share/jEdit/. $out/share/jEdit/
 
     # Icon aus dem deb übernehmen
-    if [ -f deb-contents/usr/share/pixmaps/jedit.png ]; then
-      install -Dm644 deb-contents/usr/share/pixmaps/jedit.png \
+    if [ -f deb-contents/usr/share/jEdit/doc/jedit.png ]; then
+      install -Dm644 deb-contents/usr/share/jEdit/doc/jedit.png \
         $out/share/icons/hicolor/48x48/apps/jedit.png
     fi
 

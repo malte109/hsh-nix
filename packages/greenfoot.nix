@@ -31,13 +31,12 @@ pkgs.stdenv.mkDerivation rec {
 
     mkdir -p $out/share
     mkdir -p $out/bin
-    mkdir -p $out/share/icons/hicolor/48x48/apps
 
     cp -r deb-contents/usr/share/greenfoot $out/share/greenfoot
 
     # Icon aus dem deb übernehmen
-    if [ -f deb-contents/usr/share/pixmaps/greenfoot.png ]; then
-      install -Dm644 deb-contents/usr/share/pixmaps/greenfoot.png \
+    if [ -f deb-contents/usr/share/icons/hicolor/48x48/apps/greenfoot.png ]; then
+      install -Dm644 deb-contents/usr/share/icons/hicolor/48x48/apps/greenfoot.png \
         $out/share/icons/hicolor/48x48/apps/greenfoot.png
     fi
 
